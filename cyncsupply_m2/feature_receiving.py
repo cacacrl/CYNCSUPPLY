@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import html as _html
 import random
 import base64
@@ -35,7 +36,7 @@ except Exception:
 
 
 # ==========================================
-# FONT REGISTRATION
+# FONT REGISTRATION (for Peso symbol)
 # ==========================================
 _FONT_REGULAR = "Helvetica"
 _FONT_BOLD = "Helvetica-Bold"
@@ -78,7 +79,7 @@ _register_fonts()
 
 
 # ==========================================
-# BARCODE — SVG
+# BARCODE — SVG (on-screen preview)
 # ==========================================
 def generate_barcode_svg(tag_id: str) -> str:
     if _BARCODE_OK:
@@ -96,6 +97,7 @@ def generate_barcode_svg(tag_id: str) -> str:
         code.write(buf)
         return buf.getvalue().decode("utf-8")
 
+    # Fallback — decorative bars
     random.seed(sum(ord(c) for c in tag_id))
     x, bars = 10, ""
     for _ in range(32):
@@ -111,7 +113,7 @@ def generate_barcode_svg(tag_id: str) -> str:
 
 
 # ==========================================
-# BARCODE — PIL Image
+# BARCODE — PIL Image (for print sheet + ZIP)
 # ==========================================
 def _barcode_pil(tag_id: str, target_width_px: int):
     writer = ImageWriter()
@@ -195,7 +197,7 @@ def _wrap_text(text, font, max_width, draw):
 
 
 # ==========================================
-# INDIVIDUAL TAG → PNG (for ZIP)
+# INDIVIDUAL TAG → PNG (for ZIP download)
 # ==========================================
 def generate_tag_png(tag: dict, width_in: float = 1.375, height_in: float = 2.75,
                      dpi: int = 600):
@@ -269,11 +271,9 @@ def generate_tag_png(tag: dict, width_in: float = 1.375, height_in: float = 2.75
 
 
 # ==========================================
-# A4 PRINT SHEET PDF — EXACTLY 6 LABELS PER PAGE
+# A4 PRINT SHEET PDF — exactly 6 labels per page
 # ==========================================
 def _build_a4_pdf(tags: list, item_name: str):
-    """Draw labels directly on canvas at absolute positions.
-    Guarantees: 2 columns × 3 rows = 6 labels per A4 page."""
     if not (_PDF_OK and _PIL_OK and _BARCODE_OK):
         return None
 
@@ -282,7 +282,7 @@ def _build_a4_pdf(tags: list, item_name: str):
     c.setTitle(f"Barcodes — {item_name}")
     c.setAuthor("CyncSupply")
 
-    A4_W, A4_H = A4                   # in points
+    A4_W, A4_H = A4
     margin = 12 * mm
     cols, rows = 2, 3
     per_page = cols * rows
@@ -302,7 +302,7 @@ def _build_a4_pdf(tags: list, item_name: str):
         x_left = margin + col * cell_w
         y_bottom = A4_H - margin - (row + 1) * cell_h
 
-        # ---- Dashed border around the label ----
+        # Dashed border
         c.saveState()
         c.setStrokeColor(colors.HexColor("#d1d5db"))
         c.setLineWidth(0.5)
@@ -314,24 +314,22 @@ def _build_a4_pdf(tags: list, item_name: str):
         inner_top = y_bottom + cell_h - pad
         inner_w = cell_w - 2 * pad
 
-        # ---- 1. Item name (top) ----
+        # Item name
         c.setFont(_FONT_BOLD, 9)
         c.setFillColor(colors.HexColor("#111827"))
         short_name = item_name if len(item_name) <= 42 else item_name[:39] + "…"
         name_y = inner_top - 4 * mm
         c.drawCentredString(cx, name_y, short_name)
 
-        # ---- 2. Barcode image (center) ----
+        # Barcode image
         bc_img = _barcode_pil(tag["tag_id"], 700)
         img_buf = BytesIO()
         bc_img.save(img_buf, format="PNG")
         img_buf.seek(0)
         img_reader = ImageReader(img_buf)
 
-        # Reserve: name 6mm + tag ID 7mm + unit 5mm + gaps 10mm = 28mm
         img_max_h = cell_h - 2 * pad - 28 * mm
         img_max_w = inner_w
-
         aspect = bc_img.width / bc_img.height
         img_w = img_max_w
         img_h = img_w / aspect
@@ -343,13 +341,13 @@ def _build_a4_pdf(tags: list, item_name: str):
         img_y = name_y - 5 * mm - img_h
         c.drawImage(img_reader, img_x, img_y, width=img_w, height=img_h)
 
-        # ---- 3. Tag ID (below barcode) ----
+        # Tag ID
         c.setFont(_FONT_BOLD, 11)
         c.setFillColor(colors.HexColor("#111827"))
         tagid_y = img_y - 5 * mm
         c.drawCentredString(cx, tagid_y, tag["tag_id"])
 
-        # ---- 4. Unit label (bottom of cell) ----
+        # Unit label
         c.setFont(_FONT_REGULAR, 8)
         c.setFillColor(colors.HexColor("#6b7280"))
         unit_y = y_bottom + pad + 1 * mm
@@ -361,7 +359,7 @@ def _build_a4_pdf(tags: list, item_name: str):
 
 
 # ==========================================
-# HTML PRINT SHEET (fallback preview)
+# HTML PRINT SHEET (inline preview)
 # ==========================================
 def _build_print_sheet(tags: list, item_name: str):
     e = _html.escape
@@ -380,12 +378,12 @@ def _build_print_sheet(tags: list, item_name: str):
 <style>
   @page {{ size: A4 portrait; margin: 10mm; }}
   * {{ box-sizing: border-box; }}
-  body {{ margin: 0; font-family: system-ui, sans-serif; }}
+  body {{ margin: 0; font-family: system-ui, sans-serif; background: #ffffff; }}
   .sheet {{
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 4mm;
-    padding: 2mm;
+    padding: 4mm;
   }}
   .label {{
     border: 0.5pt dashed #bbb;
@@ -397,6 +395,7 @@ def _build_print_sheet(tags: list, item_name: str):
     align-items: center;
     justify-content: space-between;
     min-height: 80mm;
+    background: #ffffff;
   }}
   .label-name {{
     font-size: 11pt;
@@ -405,6 +404,7 @@ def _build_print_sheet(tags: list, item_name: str):
     margin-bottom: 3mm;
     max-height: 20mm;
     overflow: hidden;
+    color: #111827;
   }}
   .label-svg svg {{ max-width: 100%; height: auto; }}
   .label-id {{
@@ -413,15 +413,27 @@ def _build_print_sheet(tags: list, item_name: str):
     font-weight: 700;
     margin-top: 2mm;
     letter-spacing: 1px;
+    color: #111827;
   }}
   .label-num {{
     font-size: 9pt;
     color: #555;
     margin-top: 1mm;
   }}
+  @media print {{
+    body {{ margin: 0; }}
+    .sheet {{ padding: 0; }}
+  }}
 </style></head><body>
 <div class="sheet">{labels_html}</div>
-<script>window.onload=function(){{setTimeout(function(){{window.print();}},350);}};</script>
+<script>
+  // Auto-print when opened in print mode (passed via ?print=1)
+  if (window.location.search.includes('print=1')) {{
+    window.onload = function() {{
+      setTimeout(function() {{ window.print(); }}, 300);
+    }};
+  }}
+</script>
 </body></html>"""
 
 
@@ -478,8 +490,7 @@ def render_receiving_module():
     if not _PIL_OK:
         st.warning("⚠️ `pillow` not installed — PNG/PDF output unavailable.")
     if not _PDF_OK:
-        st.warning("⚠️ `reportlab` not installed — A4 PDF unavailable. "
-                   "Run `pip install reportlab`.")
+        st.warning("⚠️ `reportlab` not installed — A4 PDF unavailable.")
 
     st.markdown("---")
     st.subheader("🧾 Batch Setup")
@@ -605,10 +616,15 @@ def render_receiving_module():
                       "rcv_note_input"]:
                 st.session_state.pop(k, None)
 
+            st.session_state.pop("_show_html_preview", None)
+
             flash("success",
                   f"Generated {len(tag_ids)} barcodes for {item_to_receive}.")
             st.rerun()
 
+    # ==========================================
+    # CURRENT BATCH
+    # ==========================================
     batch = st.session_state.get("current_batch")
     if batch:
         st.markdown("---")
@@ -634,7 +650,7 @@ def render_receiving_module():
                     type="primary",
                 )
             else:
-                st.button("📄 A4 PDF unavailable (install reportlab)",
+                st.button("📄 A4 PDF unavailable",
                           disabled=True, use_container_width=True)
 
         with d2:
@@ -651,15 +667,12 @@ def render_receiving_module():
                           disabled=True, use_container_width=True)
 
         with d3:
-            html_b64 = base64.b64encode(batch["print_html"].encode()).decode()
-            st.markdown(
-                f'<a href="data:text/html;base64,{html_b64}" target="_blank" '
-                f'style="display:block;padding:14px;text-align:center;'
-                f'background:#f5f5f5;color:#111827;border-radius:8px;'
-                f'text-decoration:none;font-weight:600;border:1px solid #d1d5db;">'
-                f'🖨️ HTML Preview</a>',
-                unsafe_allow_html=True,
-            )
+            # Toggle inline HTML preview (works around Chrome's data: URL block)
+            if st.button("🖨️ Show HTML Preview",
+                         use_container_width=True,
+                         key=f"toggle_html_{batch['tag_ids'][0]}"):
+                st.session_state["_show_html_preview"] = True
+                st.rerun()
 
         st.caption(
             f"📐 A4 PDF: **6 labels per page** — 2 columns × 3 rows. "
@@ -667,9 +680,37 @@ def render_receiving_module():
             f"{-(-batch['quantity'] // 6)} page(s)."
         )
 
+        # ==========================================
+        # INLINE HTML PREVIEW (fixed)
+        # ==========================================
+        if st.session_state.get("_show_html_preview"):
+            st.markdown("### 👁️ HTML Preview")
+
+            toolbar_left, toolbar_right = st.columns([3, 1])
+            with toolbar_left:
+                st.caption(
+                    "Preview of the barcode sheet. Use the A4 PDF button above "
+                    "for printing — it produces a cleaner, higher-quality sheet."
+                )
+            with toolbar_right:
+                if st.button("✖ Close Preview",
+                             use_container_width=True,
+                             key="close_html_preview"):
+                    st.session_state.pop("_show_html_preview", None)
+                    st.rerun()
+
+            # Render the HTML inline using Streamlit's component renderer.
+            # This bypasses Chrome's `data:` URL block.
+            components.html(
+                batch["print_html"],
+                height=1000,
+                scrolling=True,
+            )
+
         with st.expander("🧹 Clear this batch"):
             if st.button("Clear Batch", use_container_width=True):
                 st.session_state.pop("current_batch", None)
+                st.session_state.pop("_show_html_preview", None)
                 st.rerun()
 
         st.markdown("### 👀 Preview (first 6 labels)")
@@ -694,6 +735,9 @@ def render_receiving_module():
         if batch["quantity"] > 6:
             st.caption(f"…and {batch['quantity'] - 6} more in the PDF / ZIP.")
 
+    # ==========================================
+    # RECENT BARCODES
+    # ==========================================
     st.markdown("---")
     st.subheader("📋 Recent Individual Barcodes")
     hist = read_df(
