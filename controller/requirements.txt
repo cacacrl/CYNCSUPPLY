@@ -1,0 +1,11 @@
+streamlit>=1.33
+pandas
+python-barcode
+pillow
+sqlalchemy
+python-dotenv
+opencv-contrib-python-headless
+numpy
+reportlab
+zxing-cpp
+psycopg[binary]

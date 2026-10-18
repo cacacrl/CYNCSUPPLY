@@ -1,0 +1,33 @@
+# Environment & secrets
+.env
+.env.*
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local database
+cyncsupply.db
+cyncsuplly.db
+cyncsupply.db-wal
+cyncsuplly.db-wal
+cyncsuplly.db-shm
+cyncsuplly.db-shm
+
+# Nested clone (accidental)
+CYNCSUPPLY/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS files
+.DS_Store
+Thumbs.db
