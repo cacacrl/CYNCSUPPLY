@@ -1,7 +1,12 @@
+"""
+Run locally once to produce the hashed passwords for the Supabase seed.
+    python generate_seed_hashes.py
+Then paste each UPDATE statement into the Supabase SQL Editor.
+"""
 import os
 os.environ.setdefault("USE_SUPABASE", "0")
 
-from models.connection import hash_password
+from repositories.connection import hash_password
 
 SEEDS = [
     ("carlf", "password123", "Inventory Manager",      "Carlos Anay"),

@@ -1,7 +1,6 @@
 import streamlit as st
-import datetime
 
-from models.connection import read_df, exec_sql, today_str, flash
+from repositories.connection import read_df, exec_sql, today_str, flash
 
 
 def _row_color(row):
@@ -16,16 +15,7 @@ def _row_color(row):
 
 def render_inventory_module():
     st.title("🧱 Categorized Inventory Tracking")
-    st.caption("Live stock levels — auto-refreshes every 5 seconds.")
-
-    # ---- Top action row: Refresh button + timestamp ----
-    top1, top2 = st.columns([1, 4])
-    with top1:
-        if st.button("🔄 Refresh Now", use_container_width=True):
-            st.rerun()
-    with top2:
-        now_str_display = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        st.caption(f"🕒 Last refreshed: **{now_str_display}**")
+    st.caption("Live stock levels with visual low-stock alerts. Auto-refreshes every 5 s.")
 
     @st.fragment(run_every="5s")
     def _inventory_table():
@@ -58,17 +48,10 @@ def render_inventory_module():
         )
         st.dataframe(styled, use_container_width=True, hide_index=True)
 
-        # Show total units as a sanity check
-        total = int(view["quantity"].sum()) if not view.empty else 0
-        st.caption(f"📦 Total units in view: **{total}** across {len(view)} item(s)")
-
     _inventory_table()
 
     st.markdown("---")
 
-    # ==========================================
-    # POS Scan
-    # ==========================================
     st.subheader("📷 Point of Sale — Scan to Dispatch")
     st.caption("USB/Bluetooth scanners act as keyboards — scan a tag and press Enter.")
 

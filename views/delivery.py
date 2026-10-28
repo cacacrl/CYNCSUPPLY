@@ -1,7 +1,7 @@
 import streamlit as st
 import datetime
 
-from models.connection import read_df, exec_sql, today_str, flash
+from repositories.connection import read_df, exec_sql, today_str, flash
 
 
 def render_delivery_module():
@@ -133,5 +133,4 @@ def render_delivery_module():
                 "notes": "Notes", "received": "Date", "received_by": "Received By",
             }).drop(columns=["id"]),
             use_container_width=True, hide_index=True,
-        ) 
-        
+        )

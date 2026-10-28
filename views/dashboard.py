@@ -1,5 +1,5 @@
 import streamlit as st
-from models.connection import read_df
+from repositories.connection import read_df
 
 
 @st.fragment(run_every="5s")

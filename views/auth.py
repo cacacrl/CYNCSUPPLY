@@ -1,6 +1,6 @@
 import streamlit as st
 
-from models.connection import read_df, exec_sql, hash_password, verify_password, health_check
+from repositories.connection import read_df, exec_sql, hash_password, verify_password, health_check
 
 
 def flash(level: str, msg: str) -> None:

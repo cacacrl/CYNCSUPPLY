@@ -13,12 +13,9 @@ try:
 except Exception:
     _ZXING_OK = False
 
-from models.connection import read_df, exec_sql, today_str, now_str, flash
+from repositories.connection import read_df, exec_sql, today_str, flash
 
 
-# ==========================================
-# AUTO-MIGRATION
-# ==========================================
 def _ensure_sold_columns():
     try:
         exec_sql("ALTER TABLE receiving_tags ADD COLUMN sold INTEGER DEFAULT 0")
@@ -34,9 +31,6 @@ def _ensure_sold_columns():
         pass
 
 
-# ==========================================
-# BARCODE DECODING
-# ==========================================
 def _decode_from_bytes(bytes_data: bytes):
     arr = np.frombuffer(bytes_data, dtype=np.uint8)
     img = cv2.imdecode(arr, cv2.IMREAD_COLOR) if _CV2_OK else None
@@ -100,9 +94,6 @@ def _decode_from_bytes(bytes_data: bytes):
     return results
 
 
-# ==========================================
-# SELL ONE UNIT
-# ==========================================
 def _sell_item(barcode: str):
     tag_rows = read_df(
         "SELECT tag_id, item_name, supplier, COALESCE(sold, 0) AS sold, sold_at "
@@ -190,9 +181,6 @@ def _sell_item(barcode: str):
     )
 
 
-# ==========================================
-# MAIN MODULE
-# ==========================================
 def render_camera_scan_module():
     st.title("📷 Barcode Scanner")
     st.caption("Scan a barcode to sell 1 unit. The barcode expires after use.")
@@ -261,9 +249,6 @@ def render_camera_scan_module():
     st.rerun()
 
 
-# ==========================================
-# HISTORY + INVENTORY SNAPSHOT
-# ==========================================
 def _render_history():
     st.markdown("---")
     st.subheader("🧾 Recent Sales via Barcode")

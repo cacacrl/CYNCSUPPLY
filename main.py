@@ -1,13 +1,9 @@
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 import streamlit as st
 
-from models.connection import (
+# --- Updated import path for repositories ---
+from repositories.connection import (
     init_db, seed_if_empty, read_df, exec_sql,
-    hash_password, verify_password,
-    backend_label, health_check,
+    hash_password, verify_password, backend_label, health_check,
 )
 
 ALL_MODULES = [
@@ -277,7 +273,7 @@ init_session_state()
 
 
 # ==========================================
-# IMPORTS
+# IMPORTS (Updated to views.*)
 # ==========================================
 from views.dashboard import render_dashboard_module
 from views.inventory import render_inventory_module
@@ -317,7 +313,6 @@ else:
         st.session_state.pop("po_cart", None)
         st.session_state.pop(MENU_KEY, None)
         st.session_state.pop("receiving_prefill", None)
-        st.session_state.pop("pending_delete_id", None)
         st.rerun()
 
     st.sidebar.markdown("---")

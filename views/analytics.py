@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-from models.connection import read_df
+from repositories.connection import read_df
 
 
 def _turnover_tier(ratio: float) -> str:
